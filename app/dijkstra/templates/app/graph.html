@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Weighted Graph</title>
+        <script>
+            const graph = JSON.parse('{{ graph_data|safe }}');
+        </script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.24.0/cytoscape.min.js"></script>
+        <style>
+            
+            #cy {
+                width: 800px;
+                height: 600px;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Weighted Graph Visualization</h1>
+        
+        
+    <h1>Add Node</h1>
+    Name:
+    <input type="text" id="name" required>
+    <div id="connections">
+    </div>
+    <button type="button" id="add-connection-btn">Add Connection</button>
+    <button type="button" onclick="addNode()">Add Node</button>
+    
+    <form action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="graph" id="graph" value="">
+        <button type="submit">Calculate shortest Path</button>
+    </form>
+    {% if shortest_path %}
+        {{shortest_path}}
+    {% endif %}
+    <div id="cy"></div>
+
+    <script src="{% static 'js/graph.js' %}"></script>
+    
+</body>
+</html>

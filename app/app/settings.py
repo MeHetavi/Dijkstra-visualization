@@ -129,4 +129,4 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ALLOWED_HOSTS = ["dijkstra-visualization-sfiz.vercel.app"]
+ALLOWED_HOSTS = ['dijkstra-visualization-4hd1.vercel.app', 'vercel.app']

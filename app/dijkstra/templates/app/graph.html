@@ -34,8 +34,12 @@
         <input type="hidden" name="graph" id="graph" value="">
         <button type="submit">Calculate shortest Path</button>
     </form>
+    {% if distance %}
+        Distance Dict : {{distance}}
+    {% endif %}
+    
     {% if shortest_path %}
-        {{shortest_path}}
+        Distance Dict : {{shortest_path}}
     {% endif %}
     <div id="cy"></div>
 
@@ -144,7 +148,6 @@ function addNode() {
     document.getElementById("connections").innerHTML = ''; // Clear connection fields
     document.getElementById("graph").value = JSON.stringify(graph); // Clear node name field
 }
-
     </script>
     
 </body>

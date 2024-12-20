@@ -3,8 +3,18 @@ from django.http import HttpResponse
 import json
 import heapq
 import math
-import networkx as nx
-import matplotlib.pyplot as plt
+
+def getFullPaths(path):
+    fullPath = {}
+    for i in path:
+        fullPath[i] = []
+        prev = path[i]
+        while prev:
+            fullPath[i] += prev
+            prev = path[prev]
+    print(path)
+
+        
 
 def dijkstra(graph,start):
     priority_queue = []
@@ -23,8 +33,9 @@ def dijkstra(graph,start):
             if (graph[node][reachable]+shortest_dist) < distance[reachable] :
                 path[reachable] = node
                 distance[reachable] = graph[node][reachable]+shortest_dist
-                heapq.heappush(priority_queue, (distance[reachable], reachable))        
-    return distance
+                heapq.heappush(priority_queue, (distance[reachable], reachable))   
+    path = getFullPaths(path)     
+    return distance, path
 
 def get_adjacency_list(graph):
     final_graph = {}
@@ -43,14 +54,12 @@ def get_adjacency_list(graph):
         }
     return final_graph
 
-
 def graph_view(request):
     if request.method == "POST":
         graph = request.POST.get('graph')
         adjacency_list = get_adjacency_list(json.loads(graph))
-        shortest_path = dijkstra(adjacency_list,list(adjacency_list.keys())[0])
-        print(shortest_path)
-        return render(request, 'app/graph.html', {'graph_data': graph,'shortest_path':shortest_path})
+        distance, path = dijkstra(adjacency_list,list(adjacency_list.keys())[0])
+        return render(request, 'app/graph.html', {'graph_data': graph,'distance':distance,'path':path})
 
     graph = {
         "nodes": [
@@ -66,5 +75,3 @@ def graph_view(request):
     }
 
     return render(request, 'app/graph.html', {'graph_data': json.dumps(graph)})
-
-

@@ -275,10 +275,16 @@
                             </div>
                         {% endif %}
 
-                        {% if path %}
+                        {% if paths %}
                             <div class="output-card">
                                 <h3>Path Dictionary</h3>
-                                <div>{{ path }}</div>
+                                <div>
+                                    {% for key, value in paths.items %}
+                                        {{ key }} : {{ value }}
+                                        <br>
+                                    {% endfor %}
+
+                                </div>
                             </div>
                         {% endif %}
                     </div>
@@ -358,59 +364,73 @@
                 connectionsDiv.appendChild(newConnectionDiv);
             });
 
-            function showStatus(message) {
-                const status = document.getElementById('status');
-                status.textContent = message;
-                status.classList.add('show');
-                setTimeout(() => {
-                    status.classList.remove('show');
-                }, 3000);
+            function showStatus(message, isError = false) {
+    const status = document.getElementById('status');
+    status.textContent = message;
+    status.style.backgroundColor = isError ? '#dc2626' : '#4f46e5';
+    status.classList.add('show');
+    setTimeout(() => {
+        status.classList.remove('show');
+    }, 3000);
+}
+
+function addNode() {
+    const nodeName = document.getElementById("name").value;
+    if (!nodeName) {
+        showStatus('Please enter a node name', true);
+        return;
+    }
+
+    const connectionsDiv = document.getElementById("connections");
+    const existingNodeIds = new Set(graph.nodes.map(node => node.data.id));
+
+    // Add the new node
+    graph.nodes.push({
+        "data": {
+            "id": nodeName,
+            "label": `Node ${nodeName}`
+        }
+    });
+
+    const connectedTo = document.querySelectorAll("input[name='connected_to[]']");
+    const weights = document.querySelectorAll("input[name='weight[]']");
+    let hasErrors = false;
+
+    connectedTo.forEach((target, index) => {
+        if (target.value && weights[index].value) {
+            // Check if target node exists
+            if (!existingNodeIds.has(target.value)) {
+                showStatus(`Error: Target node "${target.value}" does not exist`, true);
+                hasErrors = true;
+                return;
             }
 
-            function addNode() {
-                const nodeName = document.getElementById("name").value;
-                if (!nodeName) {
-                    showStatus('Please enter a node name');
-                    return;
+            graph.edges.push({
+                "data": {
+                    "source": nodeName,
+                    "target": target.value,
+                    "weight": parseInt(weights[index].value),
+                    "id": `${nodeName}-${target.value}-${weights[index].value}`
                 }
+            });
+        }
+    });
 
-                const connectionsDiv = document.getElementById("connections");
-                graph.nodes.push({
-                    "data": {
-                        "id": nodeName,
-                        "label": `Node ${nodeName}`
-                    }
-                });
+    if (!hasErrors) {
+        cy.json({ elements: graph });
+        document.getElementById("name").value = '';
+        connectionsDiv.innerHTML = '';
+        document.getElementById("graph").value = JSON.stringify(graph);
+        showStatus('Node added successfully');
 
-                const connectedTo = document.querySelectorAll("input[name='connected_to[]']");
-                const weights = document.querySelectorAll("input[name='weight[]']");
-
-                connectedTo.forEach((target, index) => {
-                    if (target.value && weights[index].value) {
-                        graph.edges.push({
-                            "data": {
-                                "source": nodeName,
-                                "target": target.value,
-                                "weight": parseInt(weights[index].value),
-                                "id": `${nodeName}-${target.value}-${weights[index].value}`
-                            }
-                        });
-                    }
-                });
-
-                cy.json({ elements: graph });
-                document.getElementById("name").value = '';
-                connectionsDiv.innerHTML = '';
-                document.getElementById("graph").value = JSON.stringify(graph);
-                showStatus('Node added successfully');
-
-                cy.layout({
-                    name: 'circle',
-                    padding: 40,
-                    animate: true,
-                    animationDuration: 500
-                }).run();
-            }
+        cy.layout({
+            name: 'circle',
+            padding: 40,
+            animate: true,
+            animationDuration: 500
+        }).run();
+    }
+}
         </script>
     </body>
 </html>

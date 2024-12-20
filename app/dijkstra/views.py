@@ -60,7 +60,7 @@ def graph_view(request):
         adjacency_list = get_adjacency_list(json.loads(graph))
         (distance, path) = dijkstra(adjacency_list,list(adjacency_list.keys())[0])
         print(path)
-        return render(request, 'app/graph.html', {'graph_data': graph,'distance':distance,'path':path})
+        return render(request, 'app/graph.html', {'graph_data': graph,'distance':distance,'paths':path})
 
     graph = {
         "nodes": [

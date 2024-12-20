@@ -1,154 +1,416 @@
-{% load static %}
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Weighted Graph</title>
-        <script>
-            const graph = JSON.parse('{{ graph_data|safe }}');
-        </script>
-
+        <title>Graph Pathfinder</title>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.24.0/cytoscape.min.js"></script>
         <style>
-            
+            :root {
+                --primary: #4f46e5;
+                --primary-dark: #4338ca;
+                --primary-light: rgba(79, 70, 229, 0.1);
+                --background: #f8fafc;
+                --card: #ffffff;
+                --text: #1e293b;
+                --border: #e2e8f0;
+                --shadow: rgba(0, 0, 0, 0.1);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background-color: var(--background);
+                color: var(--text);
+                line-height: 1.5;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .header {
+                text-align: center;
+                padding: 1rem;
+                background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                color: white;
+                box-shadow: 0 2px 4px var(--shadow);
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+                font-weight: 600;
+            }
+
+            .main-container {
+                height: calc(100vh - 60px);
+                display: flex;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
             #cy {
-                width: 800px;
-                height: 600px;
-                border: 1px solid #ccc;
+                flex: 1;
+                border-radius: 0.75rem;
+                overflow: hidden;
+                background-color: var(--card);
+                box-shadow: 0 2px 4px var(--shadow);
+                transition: box-shadow 0.3s ease;
+            }
+
+            .controls {
+                width: 320px;
+                background: var(--card);
+                padding: 1.25rem;
+                border-radius: 0.75rem;
+                box-shadow: 0 2px 4px var(--shadow);
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .scrollable-content {
+                overflow-y: auto;
+                flex: 1;
+                padding-right: 0.5rem;
+            }
+
+            .scrollable-content::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .scrollable-content::-webkit-scrollbar-track {
+                background: var(--background);
+                border-radius: 3px;
+            }
+
+            .scrollable-content::-webkit-scrollbar-thumb {
+                background: var(--primary);
+                border-radius: 3px;
+            }
+
+            .section {
+                margin-bottom: 1.5rem;
+                padding-bottom: 1.5rem;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .section:last-child {
+                margin-bottom: 0;
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+                margin-bottom: 1rem;
+                color: var(--primary);
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            h2::before {
+                content: '';
+                display: block;
+                width: 4px;
+                height: 1.25rem;
+                background: var(--primary);
+                border-radius: 2px;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                font-size: 0.875rem;
+                color: var(--text);
+            }
+
+            input {
+                width: 100%;
+                padding: 0.625rem;
+                border: 1px solid var(--border);
+                border-radius: 0.5rem;
+                margin-bottom: 0.75rem;
+                transition: all 0.3s ease;
+                font-size: 0.875rem;
+            }
+
+            input:focus {
+                outline: none;
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px var(--primary-light);
+            }
+
+            .connection {
+                background: var(--background);
+                padding: 0.75rem;
+                border-radius: 0.5rem;
+                margin-bottom: 0.75rem;
+                animation: slideIn 0.3s ease;
+            }
+
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .button-group {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 1rem;
+            }
+
+            button {
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 0.625rem 1rem;
+                border-radius: 0.5rem;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                font-size: 0.875rem;
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+
+            button:hover {
+                background: var(--primary-dark);
+                transform: translateY(-1px);
+            }
+
+            .output-section {
+                margin-top: 1rem;
+            }
+
+            .output-card {
+                background: var(--background);
+                padding: 0.75rem;
+                border-radius: 0.5rem;
+                margin-bottom: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .output-card h3 {
+                font-size: 0.875rem;
+                margin-bottom: 0.5rem;
+                color: var(--primary);
+            }
+
+            .status {
+                position: fixed;
+                bottom: 1rem;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--primary);
+                color: white;
+                padding: 0.5rem 1rem;
+                border-radius: 2rem;
+                font-size: 0.875rem;
+                box-shadow: 0 2px 4px var(--shadow);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+
+            .status.show {
+                opacity: 1;
             }
         </style>
     </head>
     <body>
-        <h1>Weighted Graph Visualization</h1>
-        
-        
-    <h1>Add Node</h1>
-    Name:
-    <input type="text" id="name" required>
-    <div id="connections">
-    </div>
-    <button type="button" id="add-connection-btn">Add Connection</button>
-    <button type="button" onclick="addNode()">Add Node</button>
-    
-    <form action="" method="POST">
-        {% csrf_token %}
-        <input type="hidden" name="graph" id="graph" value="">
-        <button type="submit">Calculate shortest Path</button>
-    </form>
-    {% if distance %}
-        Distance Dict : {{distance}}
-    {% endif %}
-    <br>
-    {% if path %}
-        Path Dict : {{path}}
-    {% endif %}
-    <div id="cy"></div>
+        <div class="header">
+            <h1>Graph Pathfinder</h1>
+        </div>
 
-    <script>
-        console.log(graph)
-document.getElementById("graph").value = JSON.stringify(graph); // Clear node name field
+        <div class="main-container">
+            <div id="cy"></div>
 
-// Initialize Cytoscape
-const cy = cytoscape({
-    container: document.getElementById('cy'), // The div to render the graph in
-    elements: graph, // The graph data
-    style: [
-        {
-            selector: 'node',
-            style: {
-                'background-color': '#0074D9',
-                'label': 'data(label)', // Display the label on each node
-                'color': '#fff',
-                'text-outline-width': 2,
-                'text-outline-color': '#0074D9',
+            <div class="controls">
+                <div class="scrollable-content">
+                    <div class="section">
+                        <h2>Add Node</h2>
+                        <label for="name">Node Name</label>
+                        <input type="text" id="name" placeholder="Enter node name" required>
+
+                        <div id="connections"></div>
+
+                        <div class="button-group">
+                            <button type="button" id="add-connection-btn">+ Add Connection</button>
+                            <button type="button" onclick="addNode()">Create Node</button>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h2>Calculate</h2>
+                        <form action="" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="graph" id="graph" value="">
+                            <button type="submit">Find Shortest Path</button>
+                        </form>
+                    </div>
+
+                    <div class="output-section">
+                        {% if distance %}
+                            <div class="output-card">
+                                <h3>Distance Dictionary</h3>
+                                <div>{{ distance }}</div>
+                            </div>
+                        {% endif %}
+
+                        {% if path %}
+                            <div class="output-card">
+                                <h3>Path Dictionary</h3>
+                                <div>{{ path }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <script>
+            const graph = JSON.parse('{{ graph_data|safe }}');
+            document.getElementById("graph").value = JSON.stringify(graph);
+
+            const cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: graph,
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#4f46e5',
+                            'label': 'data(label)',
+                            'color': '#fff',
+                            'text-outline-width': 2,
+                            'text-outline-color': '#4f46e5',
+                            'width': 45,
+                            'height': 45,
+                            'font-size': '12px',
+                            'transition-property': 'background-color, width, height',
+                            'transition-duration': '0.3s'
+                        }
+                    },
+                    {
+                        selector: 'node:hover',
+                        style: {
+                            'background-color': '#4338ca',
+                            'width': 50,
+                            'height': 50
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#94a3b8',
+                            'curve-style': 'bezier',
+                            'label': 'data(weight)',
+                            'font-size': '11px',
+                            'text-background-opacity': 1,
+                            'text-background-color': '#fff',
+                            'text-background-padding': 3,
+                            'target-arrow-color': '#94a3b8',
+                            'arrow-scale': 1.2
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'circle',
+                    padding: 40,
+                    animate: true,
+                    animationDuration: 500
+                }
+            });
+
+            document.getElementById("add-connection-btn").addEventListener("click", function() {
+                const connectionsDiv = document.getElementById("connections");
+                const newConnectionDiv = document.createElement("div");
+                newConnectionDiv.className = "connection";
+
+                newConnectionDiv.innerHTML = `
+                    <label>Connected to:</label>
+                    <input type="text" class="target" name="connected_to[]" placeholder="Enter target node" required>
+                    <label>Weight:</label>
+                    <input type="number" class="weight" name="weight[]" min="0" placeholder="Enter weight" required>
+                `;
+
+                connectionsDiv.appendChild(newConnectionDiv);
+            });
+
+            function showStatus(message) {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.classList.add('show');
+                setTimeout(() => {
+                    status.classList.remove('show');
+                }, 3000);
             }
-        },
-        {
-            selector: 'edge',
-            style: {
-                'width': 3,
-                'line-color': 'black',
-                'curve-style': 'bezier',
-                'label': 'data(weight)', // Display weight on edges
-                'font-size': 12,
-                'text-background-opacity': 1,
-                'text-background-color': '#fff',
-                'text-background-padding': 2,
+
+            function addNode() {
+                const nodeName = document.getElementById("name").value;
+                if (!nodeName) {
+                    showStatus('Please enter a node name');
+                    return;
+                }
+
+                const connectionsDiv = document.getElementById("connections");
+                graph.nodes.push({
+                    "data": {
+                        "id": nodeName,
+                        "label": `Node ${nodeName}`
+                    }
+                });
+
+                const connectedTo = document.querySelectorAll("input[name='connected_to[]']");
+                const weights = document.querySelectorAll("input[name='weight[]']");
+
+                connectedTo.forEach((target, index) => {
+                    if (target.value && weights[index].value) {
+                        graph.edges.push({
+                            "data": {
+                                "source": nodeName,
+                                "target": target.value,
+                                "weight": parseInt(weights[index].value),
+                                "id": `${nodeName}-${target.value}-${weights[index].value}`
+                            }
+                        });
+                    }
+                });
+
+                cy.json({ elements: graph });
+                document.getElementById("name").value = '';
+                connectionsDiv.innerHTML = '';
+                document.getElementById("graph").value = JSON.stringify(graph);
+                showStatus('Node added successfully');
+
+                cy.layout({
+                    name: 'circle',
+                    padding: 40,
+                    animate: true,
+                    animationDuration: 500
+                }).run();
             }
-        }
-    ],
-    layout: {
-        name: 'circle', // Circular layout to place nodes in a circular fashion
-        padding: 10,
-    }
-});
-
-document.getElementById("add-connection-btn").addEventListener("click", function () {
-    const connectionsDiv = document.getElementById("connections");
-
-    // Create a new div for the connection fields
-    const newConnectionDiv = document.createElement("div");
-    newConnectionDiv.className = "connection";
-
-    // Add input fields for "Connected to" and "Weight"
-    newConnectionDiv.innerHTML = `
-        Connected to:
-        <input type="text" class="target" name="connected_to[]" required>
-        Weight:
-        <input type="number" class="weight" name="weight[]" min="0" placeholder="Enter a positive number" required>
-        `;
-
-    // Append the new connection fields to the connections div
-    connectionsDiv.appendChild(newConnectionDiv);
-});
-
-function addNode() {
-    const nodeName = document.getElementById("name").value;
-    const connectionsDiv = document.getElementById("connections");
-
-    // Add the new node to the graph
-    graph.nodes.push({
-        "data": {
-            "id": nodeName,
-            "label": `Node ${nodeName}`
-        }
-    });
-
-    // Get all the connections (target and weight) from the form
-    const connectedTo = document.querySelectorAll("input[name='connected_to[]']");
-    const weights = document.querySelectorAll("input[name='weight[]']");
-
-    // Add the corresponding edges to the graph
-    connectedTo.forEach((target, index) => {
-        // Log the edge data object without using JSON.parse
-        console.log({
-            "data": {
-                "source": nodeName,
-                "target": target.value,
-                "weight": parseInt(weights[index].value)
-            }
-        });
-
-        // Push the edge data to the graph
-        graph.edges.push({
-            "data": {
-                "source": nodeName,
-                "target": target.value,
-                "weight": parseInt(weights[index].value),
-                "id": `${nodeName}-${target.value}-${weights[index].value}`
-            }
-        });
-
-    });
-
-    // Update Cytoscape graph with new data
-    cy.json({ elements: graph });
-
-    // Optionally, clear the form after adding the node
-    document.getElementById("name").value = ''; // Clear node name field
-    document.getElementById("connections").innerHTML = ''; // Clear connection fields
-    document.getElementById("graph").value = JSON.stringify(graph); // Clear node name field
-}
-    </script>
-    
-</body>
+        </script>
+    </body>
 </html>

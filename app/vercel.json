@@ -11,7 +11,7 @@
         },
         {
             "src": "static/**",
-            "use": "@vercel/static"
+            "use": "@vercel/python"
         }
     ],
     "routes": [

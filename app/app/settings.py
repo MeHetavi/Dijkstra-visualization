@@ -129,4 +129,4 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ALLOWED_HOSTS = ['vercel.com','dijkstra-visualization-beta.vercel.app']
+ALLOWED_HOSTS = ['vercel.com','dijkstra-visualization-beta.vercel.app','localhost','http://127.0.0.1:8000']

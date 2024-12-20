@@ -7,14 +7,14 @@ import math
 def getFullPaths(path):
     fullPath = {}
     for i in path:
-        fullPath[i] = []
         prev = path[i]
+        fullPath[i] = [i]
         while prev:
             fullPath[i] += prev
             prev = path[prev]
-    print(path)
+        fullPath[i] = list(reversed(fullPath[i]))
+    return fullPath
 
-        
 
 def dijkstra(graph,start):
     priority_queue = []
@@ -35,7 +35,7 @@ def dijkstra(graph,start):
                 distance[reachable] = graph[node][reachable]+shortest_dist
                 heapq.heappush(priority_queue, (distance[reachable], reachable))   
     path = getFullPaths(path)     
-    return distance, path
+    return (distance, path)
 
 def get_adjacency_list(graph):
     final_graph = {}
@@ -58,7 +58,8 @@ def graph_view(request):
     if request.method == "POST":
         graph = request.POST.get('graph')
         adjacency_list = get_adjacency_list(json.loads(graph))
-        distance, path = dijkstra(adjacency_list,list(adjacency_list.keys())[0])
+        (distance, path) = dijkstra(adjacency_list,list(adjacency_list.keys())[0])
+        print(path)
         return render(request, 'app/graph.html', {'graph_data': graph,'distance':distance,'path':path})
 
     graph = {
